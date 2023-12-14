@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import { Transaction } from "../types/transaction";
 
 function getRandomInt(min: number, max: number): number {
@@ -20,4 +21,32 @@ export const generateFakeTransaction = (): Transaction => {
     description: users[selectUserIndex],
     relatedAccount: "5050505050"
   };
+};
+
+export const generateRandom8DigitNumber = (): number => {
+  const min = 10000000; // Smallest 8-digit number
+  const max = 99999999; // Largest 8-digit number
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+export const encryptData = (plainText: string, publicKey: string): string => {
+  const encryptedBuffer = crypto.publicEncrypt(
+    { key: publicKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+    Buffer.from(plainText, "utf-8")
+  );
+
+  return encryptedBuffer.toString("base64");
+};
+
+export const decryptData = (
+  encryptedData: string,
+  privateKey: string
+): string => {
+  const decryptedBuffer = crypto.privateDecrypt(
+    { key: privateKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },
+    Buffer.from(encryptedData, "base64")
+  );
+
+  return decryptedBuffer.toString("utf-8");
 };

@@ -1,10 +1,14 @@
+import { CreateQueueInput } from "../types/create-queue-input";
+import { LotteryService } from "./lottery.service";
 import RabbitMQManager from "./rabbit-manager";
 
 export class GeneratorService {
   private rabbitMqManager: RabbitMQManager;
+  private lotteryService: LotteryService;
 
   constructor() {
     this.rabbitMqManager = RabbitMQManager.getInstance();
+    this.lotteryService = new LotteryService();
   }
 
   async generatorQueue() {
@@ -14,6 +18,7 @@ export class GeneratorService {
       durable: true
     });
 
+    // Queue nernuudiig suuld uurchilnu
     const queueName = "barimt";
     const routingKey = "create";
 
@@ -29,7 +34,18 @@ export class GeneratorService {
       queueName,
       async (msg) => {
         if (msg?.content) {
-          console.log("Generate ", JSON.parse(msg.content.toString()));
+          const inputData: CreateQueueInput = JSON.parse(
+            msg.content.toString()
+          ) as CreateQueueInput;
+
+          console.log("Ready generate! ", inputData);
+
+          const res = await this.lotteryService.createLotteryNumbers(inputData);
+          if (res.result) {
+            queueChannel.ack(msg);
+          } else {
+            // Transaction service-ruu queue shidne
+          }
         }
       },
       {

@@ -4,7 +4,7 @@ class RabbitMQManager {
   private static instance: RabbitMQManager;
   private connection: amqp.Connection | null = null;
   private channels: Map<string, amqp.Channel> = new Map();
-  
+
   private constructor() {}
 
   public static getInstance(): RabbitMQManager {
