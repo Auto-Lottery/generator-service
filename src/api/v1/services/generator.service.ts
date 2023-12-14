@@ -38,8 +38,6 @@ export class GeneratorService {
             msg.content.toString()
           ) as CreateQueueInput;
 
-          console.log("Ready generate! ", inputData);
-
           const res = await this.lotteryService.createLotteryNumbers(inputData);
           if (res.result) {
             queueChannel.ack(msg);
