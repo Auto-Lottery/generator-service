@@ -1,5 +1,6 @@
 import express from "express";
-import testRoutes from "./test.routes";
+import userRoutes from "./user.routes";
+import { AuthApiService } from "../services/auth-api.service";
 const V1Routes = express.Router();
 
 V1Routes.get("/", (req, res) => {
@@ -8,6 +9,6 @@ V1Routes.get("/", (req, res) => {
   });
 });
 
-V1Routes.use("/test", testRoutes);
+V1Routes.use("/user", AuthApiService.verifyToken, userRoutes);
 
 export default V1Routes;

@@ -4,11 +4,16 @@ import { CreateQueueInput } from "../types/create-queue-input";
 import { PackageType } from "../types/enums";
 import { GenerateLotteryInput } from "../types/generate-lottery-input";
 import { GenerateLotteryOutput } from "../types/generate-lottery-output";
-import { Lottery } from "../types/lottery";
+import { Lottery, LotteryWithNumber } from "../types/lottery";
 import { OrderedLottery } from "../types/ordered-lottery";
 import { PackageInfo } from "../types/package-info";
 import { KeyPair } from "../types/secret";
-import { encryptData, generateRandom8DigitNumber } from "../utilities";
+import { User } from "../types/user";
+import {
+  decryptData,
+  encryptData,
+  generateRandom8DigitNumber
+} from "../utilities";
 import { errorLog } from "../utilities/log";
 import { RedisManager } from "./redis-manager";
 import VaultManager from "./vault-manager";
@@ -207,5 +212,26 @@ export class LotteryService {
         message: "CREATE LOTTERY ERROR "
       };
     }
+  }
+
+  async getUserLotteries(user: User): Promise<LotteryWithNumber[]> {
+    const userId = user._id;
+    const lotteries = await LotteryModel.find({
+      userId
+    });
+    const vaultManager = VaultManager.getInstance();
+    const userSecret = (await vaultManager.read(
+      `secret/data/${userId}`
+    )) as KeyPair;
+
+    return lotteries.map((lot) => {
+      const { secureData, ...other } = lot.toJSON();
+      const encryptedData = decryptData(secureData, userSecret.privateKey);
+      lot.secureData;
+      return {
+        ...other,
+        ...JSON.parse(encryptedData)
+      };
+    });
   }
 }
