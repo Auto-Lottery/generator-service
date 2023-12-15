@@ -10,7 +10,7 @@ import { PackageInfo } from "../types/package-info";
 import { KeyPair } from "../types/secret";
 import { encryptData, generateRandom8DigitNumber } from "../utilities";
 import { RedisManager } from "./redis-manager";
-import VaultManager from "./vautl-manager";
+import VaultManager from "./vault-manager";
 
 export class LotteryService {
   constructor() {}

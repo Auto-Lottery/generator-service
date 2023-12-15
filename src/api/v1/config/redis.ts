@@ -1,5 +1,5 @@
 import { RedisManager } from "../services/redis-manager";
-import VaultManager from "../services/vautl-manager";
+import VaultManager from "../services/vault-manager";
 
 const redisManager = RedisManager.getInstance();
 

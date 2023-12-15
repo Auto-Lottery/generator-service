@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import VaultManager from "../services/vautl-manager";
+import VaultManager from "../services/vault-manager";
 
 export const connectDb = async () => {
   try {

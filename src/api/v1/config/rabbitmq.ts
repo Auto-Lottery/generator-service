@@ -1,5 +1,5 @@
 import RabbitMQManager from "../services/rabbit-manager";
-import VaultManager from "../services/vautl-manager";
+import VaultManager from "../services/vault-manager";
 
 export const connectQueue = async () => {
   const rabbitMQManager = RabbitMQManager.getInstance();
