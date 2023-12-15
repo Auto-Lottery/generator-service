@@ -185,8 +185,6 @@ export class LotteryService {
       await OrderedLotteryModel.insertMany(response.orderedLotteryList);
       await LotteryModel.insertMany(response.lotteryList);
       await this.updateLastSeriesNumber(response.lastSeriesNumber);
-
-      // Transaction update hiine
       return {
         result: true
       };

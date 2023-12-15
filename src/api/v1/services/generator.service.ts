@@ -40,15 +40,45 @@ export class GeneratorService {
 
           const res = await this.lotteryService.createLotteryNumbers(inputData);
           if (res.result) {
-            queueChannel.ack(msg);
+            this.sendToTransaction({
+              transactionId: inputData.transaction.id,
+              status: "COMPLETE",
+              description: "Амжилттай үүслээ"
+            });
           } else {
             // Transaction service-ruu queue shidne
+            this.sendToTransaction({
+              transactionId: inputData.transaction.id,
+              status: "FAILED",
+              description: res.message || "Алдаа гарлаа"
+            });
           }
+          queueChannel.ack(msg);
         }
       },
       {
         noAck: false
       }
     );
+  }
+
+  async sendToTransaction(data: {
+    transactionId: string;
+    status: string;
+    description: string;
+  }) {
+    const rabbitMQManager = RabbitMQManager.getInstance();
+    const rabbitMqChannel =
+      await rabbitMQManager.createChannel("bank_transaction");
+    if (rabbitMqChannel) {
+      // Амжилттай болсон Transaction-ний ID шиднэ.
+      rabbitMqChannel.sendToQueue(
+        "transaction",
+        Buffer.from(JSON.stringify(data)),
+        {
+          persistent: true
+        }
+      );
+    }
   }
 }
