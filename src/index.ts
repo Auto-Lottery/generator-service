@@ -5,6 +5,7 @@ import { PORT } from "./api/v1/config";
 import { connectRedis } from "./api/v1/config/redis";
 import { connectQueue } from "./api/v1/config/rabbitmq";
 import { GeneratorService } from "./api/v1/services/generator.service";
+import { infoLog } from "./api/v1/utilities/log";
 
 const app = express();
 app.use(express.json());
@@ -21,7 +22,7 @@ app.get("/", function (req: Request, res: Response) {
 app.use("/v1", V1Routes);
 
 app.listen(PORT, async () => {
-  console.log(`Started server on ${PORT} port`);
+  infoLog(`Started server on ${PORT} port`);
   await connectDb();
   await connectRedis();
   await connectQueue();

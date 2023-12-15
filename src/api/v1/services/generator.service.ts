@@ -44,6 +44,7 @@ export class GeneratorService {
               transactionId: inputData.transaction.id,
               status: "COMPLETE",
               description: "Амжилттай үүслээ"
+              // ...res?.transaction
             });
           } else {
             // Transaction service-ruu queue shidne

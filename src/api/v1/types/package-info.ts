@@ -4,4 +4,5 @@ export type PackageInfo = {
   type: PackageType;
   count: number;
   amount: number;
+  change?: number;
 };

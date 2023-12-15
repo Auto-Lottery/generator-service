@@ -9,6 +9,7 @@ import { OrderedLottery } from "../types/ordered-lottery";
 import { PackageInfo } from "../types/package-info";
 import { KeyPair } from "../types/secret";
 import { encryptData, generateRandom8DigitNumber } from "../utilities";
+import { errorLog } from "../utilities/log";
 import { RedisManager } from "./redis-manager";
 import VaultManager from "./vault-manager";
 
@@ -33,7 +34,8 @@ export class LotteryService {
         return {
           type: PackageType.PACKAGE_1,
           count: Math.floor(amount / 20000),
-          amount
+          amount,
+          change: amount % 20000
         };
     }
   }
@@ -158,6 +160,7 @@ export class LotteryService {
 
   async createLotteryNumbers(data: CreateQueueInput): Promise<{
     result: boolean;
+    transaction?: Record<string, string | number | undefined>;
     message?: string;
   }> {
     try {
@@ -186,7 +189,10 @@ export class LotteryService {
       await LotteryModel.insertMany(response.lotteryList);
       await this.updateLastSeriesNumber(response.lastSeriesNumber);
       return {
-        result: true
+        result: true,
+        transaction: {
+          change: packageInfo?.change
+        }
       };
     } catch (err) {
       if (err instanceof Error) {
@@ -195,7 +201,7 @@ export class LotteryService {
           message: `${err.name} - ${err.message}`
         };
       }
-      console.log("CREATE LOTTERY ERROR ", err);
+      errorLog("CREATE LOTTERY ERROR ", err);
       return {
         result: false,
         message: "CREATE LOTTERY ERROR "
