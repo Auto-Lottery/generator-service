@@ -1,3 +1,4 @@
+import { isDev } from ".";
 import RabbitMQManager from "../services/rabbit-manager";
 import VaultManager from "../services/vault-manager";
 import { errorLog } from "../utilities/log";
@@ -6,7 +7,8 @@ export const connectQueue = async () => {
   const rabbitMQManager = RabbitMQManager.getInstance();
   try {
     const vaultManager = VaultManager.getInstance();
-    const config = await vaultManager.read("kv/data/rabbitmq");
+    const configKey = isDev ? "kv/data/rabbitmqDev" : "kv/data/rabbitmq";
+    const config = await vaultManager.read(configKey);
     await rabbitMQManager.init(config);
   } catch (error) {
     await rabbitMQManager.closeConnection();
