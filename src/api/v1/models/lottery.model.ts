@@ -4,11 +4,13 @@ const LotterySchema = new Schema({
   series: {
     type: String,
     required: true,
-    upperCase: true
+    upperCase: true,
+    unique: true
   },
   seriesNumber: {
     type: Number,
-    required: true
+    required: true,
+    unique: true
   },
   type: {
     type: String,
