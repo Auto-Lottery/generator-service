@@ -1,7 +1,7 @@
 import { isDev } from ".";
 import { RedisManager } from "../services/redis-manager";
 import VaultManager from "../services/vault-manager";
-import { debugLog, errorLog } from "../utilities/log";
+import { errorLog } from "../utilities/log";
 
 const redisManager = RedisManager.getInstance();
 

@@ -1,6 +1,9 @@
-import { CreateQueueInput } from "../types/create-queue-input";
+import mongoose from "mongoose";
+import { transactional } from "../config/mongodb";
+import { CreateQueueInput, CreateQueueOutput } from "../types/create-queue";
 import { LotteryService } from "./lottery.service";
 import RabbitMQManager from "./rabbit-manager";
+import { errorLog } from "../utilities/log";
 
 export class GeneratorService {
   private rabbitMqManager: RabbitMQManager;
@@ -34,27 +37,49 @@ export class GeneratorService {
       queueName,
       async (msg) => {
         if (msg?.content) {
-          const inputData: CreateQueueInput = JSON.parse(
-            msg.content.toString()
-          ) as CreateQueueInput;
+          const dataJsonString = msg.content.toString();
 
-          const res = await this.lotteryService.createLotteryNumbers(inputData);
-          if (res.result) {
-            this.sendToTransaction({
-              transactionId: inputData.transaction.id,
-              status: "COMPLETE",
-              description: "Амжилттай үүслээ"
-              // ...res?.transaction
-            });
-          } else {
-            // Transaction service-ruu queue shidne
-            this.sendToTransaction({
-              transactionId: inputData.transaction.id,
-              status: "FAILED",
-              description: res.message || "Алдаа гарлаа"
-            });
+          if (!dataJsonString) {
+            errorLog("Queue empty message");
+            queueChannel.ack(msg);
+            return;
           }
-          queueChannel.ack(msg);
+          try {
+            const inputData: CreateQueueInput = JSON.parse(
+              dataJsonString
+            ) as CreateQueueInput;
+
+            const session = await mongoose.startSession();
+            const res = await transactional<CreateQueueOutput>(session, () =>
+              this.lotteryService.createLotteryNumbers(inputData, session)
+            );
+            session.endSession();
+            if (res === null) {
+              errorLog(
+                "Lottery generate queue transactional error: ",
+                inputData
+              );
+              return;
+            }
+            if (res.result) {
+              this.sendToTransaction({
+                transactionId: inputData.transaction.id,
+                status: "COMPLETE",
+                description: "Амжилттай үүслээ"
+                // ...res?.transaction
+              });
+            } else {
+              // Transaction service-ruu queue shidne
+              this.sendToTransaction({
+                transactionId: inputData.transaction.id,
+                status: "FAILED",
+                description: res.message || "Алдаа гарлаа"
+              });
+            }
+            queueChannel.ack(msg);
+          } catch (err) {
+            errorLog("Lottery generate queue error: ", err);
+          }
         }
       },
       {

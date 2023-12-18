@@ -1,6 +1,7 @@
+import mongoose from "mongoose";
 import LotteryModel from "../models/lottery.model";
 import OrderedLotteryModel from "../models/ordered-lottery.model";
-import { CreateQueueInput } from "../types/create-queue-input";
+import { CreateQueueInput, CreateQueueOutput } from "../types/create-queue";
 import { PackageType } from "../types/enums";
 import { GenerateLotteryInput } from "../types/generate-lottery-input";
 import { GenerateLotteryOutput } from "../types/generate-lottery-output";
@@ -163,11 +164,10 @@ export class LotteryService {
     };
   }
 
-  async createLotteryNumbers(data: CreateQueueInput): Promise<{
-    result: boolean;
-    transaction?: Record<string, string | number | undefined>;
-    message?: string;
-  }> {
+  async createLotteryNumbers(
+    data: CreateQueueInput,
+    session: mongoose.mongo.ClientSession
+  ): Promise<CreateQueueOutput> {
     try {
       const packageInfo = this.getPackageFromAmount(data.transaction.amount);
 
@@ -177,9 +177,17 @@ export class LotteryService {
         "secret/data/systemSecret"
       )) as KeyPair;
 
+      if (!systemSecret) {
+        throw new Error("System secret олдсонгүй!");
+      }
+
       const userSecret = (await vaultManager.read(
         `secret/data/${data.user._id}`
       )) as KeyPair;
+
+      if (!userSecret) {
+        throw new Error("Хэрэглэгчийн secret олдсонгүй! " + data.user._id);
+      }
 
       // Lottery датаг үүсгэнэ
       const response = await this.generateLottery({
@@ -190,8 +198,12 @@ export class LotteryService {
         userKeyPair: userSecret
       });
 
-      await OrderedLotteryModel.insertMany(response.orderedLotteryList);
-      await LotteryModel.insertMany(response.lotteryList);
+      await OrderedLotteryModel.insertMany(response.orderedLotteryList, {
+        session
+      });
+      await LotteryModel.insertMany(response.lotteryList, {
+        session
+      });
       await this.updateLastSeriesNumber(response.lastSeriesNumber);
       return {
         result: true,

@@ -1,4 +1,5 @@
 import { createClient } from "redis";
+import { errorLog } from "../utilities/log";
 
 export class RedisManager {
   private static instance: RedisManager;
@@ -23,7 +24,8 @@ export class RedisManager {
     });
     this.client.connect();
     this.client.on("error", (err) => {
-      console.error(`Redis connection error: ${err}`);
+      errorLog(err);
+      throw new Error(`Redis connection error.`);
     });
   }
 
