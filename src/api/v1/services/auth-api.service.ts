@@ -16,6 +16,27 @@ export class AuthApiService {
           }
         }
       );
+      req.user = data;
+      next();
+    } catch (err) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+  }
+
+  static async adminVerifyToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { data } = await axios.get(
+        `${AUTH_SERVICE_URL}/v1/admin/verifyToken`,
+        {
+          headers: {
+            Authorization: req.headers.authorization
+          }
+        }
+      );
       debugLog(data);
       req.user = data;
       next();

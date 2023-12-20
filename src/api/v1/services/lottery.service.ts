@@ -22,6 +22,27 @@ import VaultManager from "./vault-manager";
 export class LotteryService {
   constructor() {}
 
+  async getLotteryList(page: number, pageSize: number, sortBy?: string) {
+    try {
+      const skip = (page - 1) * pageSize;
+      const orders = await OrderedLotteryModel.find()
+        .skip(skip)
+        .limit(pageSize)
+        .sort({
+          [sortBy || "_id"]: -1
+        })
+        .exec();
+      const total = await OrderedLotteryModel.countDocuments();
+      return {
+        lotteryList: orders,
+        total
+      };
+    } catch (error) {
+      errorLog("Error fetching order ", error);
+      throw new Error(`Error fetching order`);
+    }
+  }
+
   private getPackageFromAmount(amount: number): PackageInfo {
     switch (amount) {
       case 50000:
@@ -45,7 +66,6 @@ export class LotteryService {
         };
     }
   }
-
   // Сугалааны дарааллын сүүлийн дугаар
   async getLastSeriesNumber(): Promise<number> {
     const redisManager = RedisManager.getInstance();
