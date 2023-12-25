@@ -1,7 +1,6 @@
 import axios from "axios";
 import { AUTH_SERVICE_URL } from "../config";
 import { NextFunction, Request, Response } from "express";
-import { debugLog } from "../utilities/log";
 
 export class AuthApiService {
   constructor() {}
@@ -37,7 +36,6 @@ export class AuthApiService {
           }
         }
       );
-      debugLog(data);
       req.user = data;
       next();
     } catch (err) {

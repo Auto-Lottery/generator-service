@@ -30,10 +30,7 @@ const LotterySchema = new Schema(
     status: {
       type: String
     },
-    tohirolId: {
-      type: String,
-      required: true
-    },
+    tohirol: { type: Schema.Types.ObjectId, ref: "tohirol" },
     createdDate: {
       type: Number,
       default: Date.now(),

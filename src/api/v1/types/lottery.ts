@@ -9,7 +9,7 @@ export type Lottery = {
   amount: number;
   createdDate?: number;
   secureData: string;
-  tohirolId: string;
+  tohirol: string;
 };
 
 export type LotteryWithNumber = {

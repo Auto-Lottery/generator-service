@@ -35,6 +35,7 @@ export class LotteryService {
         .sort({
           [sortBy || "_id"]: -1
         })
+        .populate("tohirol")
         .exec();
       const total = await OrderedLotteryModel.countDocuments();
       return {
@@ -148,7 +149,7 @@ export class LotteryService {
         userPhoneNumber: user.phoneNumber,
         type: packageInfo.type,
         amount: packageInfo.amount,
-        tohirolId: tohirol._id
+        tohirol: tohirol._id
       };
 
       const lotterySecureData = {
@@ -178,7 +179,7 @@ export class LotteryService {
         lotteryNumber: lNum,
         secureData: encryptedUserSecureData,
         status: "ACTIVE",
-        tohirolId: tohirol._id
+        tohirol: tohirol._id
       });
       lotteryList.push({
         ...lotteryData,
@@ -207,7 +208,9 @@ export class LotteryService {
       const tohirol = tohirolRes.data;
 
       // Tohirol duursen esehiig shalgana
-      const allLottery = await LotteryModel.find({ tohirolId: tohirol._id });
+      const allLottery = await LotteryModel.find({
+        tohirol: tohirol._id
+      });
 
       if (tohirol.status === TohirolStatus.FILLED) {
         throw new Error("Тохирол дүүрсэн байна!");
@@ -245,15 +248,14 @@ export class LotteryService {
         userKeyPair: userSecret
       });
 
-
       await OrderedLotteryModel.insertMany(response.orderedLotteryList, {
         session
       });
-      
+
       await LotteryModel.insertMany(response.lotteryList, {
         session
       });
-      
+
       await this.updateLastSeriesNumber(response.lastSeriesNumber);
       return {
         result: true,
