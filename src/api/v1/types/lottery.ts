@@ -1,15 +1,15 @@
 import { PackageType } from "./enums";
 
 export type Lottery = {
-  series: string;
   userId: string;
   userPhoneNumber: string;
   status?: string;
   seriesNumber: number;
   type: PackageType;
   amount: number;
-  createdDate?: Date;
+  createdDate?: number;
   secureData: string;
+  tohirolId: string;
 };
 
 export type LotteryWithNumber = {

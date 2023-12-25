@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import LotteryModel from "../models/lottery.model";
 import OrderedLotteryModel from "../models/ordered-lottery.model";
 import { CreateQueueInput, CreateQueueOutput } from "../types/create-queue";
-import { PackageType } from "../types/enums";
+import { PackageType, TohirolStatus } from "../types/enums";
 import { GenerateLotteryInput } from "../types/generate-lottery-input";
 import { GenerateLotteryOutput } from "../types/generate-lottery-output";
 import { Lottery, LotteryWithNumber } from "../types/lottery";
@@ -18,9 +18,13 @@ import {
 import { errorLog } from "../utilities/log";
 import { RedisManager } from "./redis-manager";
 import VaultManager from "./vault-manager";
+import { TohirolService } from "./tohirol.service";
 
 export class LotteryService {
-  constructor() {}
+  tohirolService: TohirolService;
+  constructor() {
+    this.tohirolService = new TohirolService();
+  }
 
   async getLotteryList(page: number, pageSize: number, sortBy?: string) {
     try {
@@ -122,6 +126,7 @@ export class LotteryService {
   }
 
   async generateLottery({
+    tohirol,
     transactionId,
     packageInfo,
     systemKeyPair,
@@ -136,18 +141,18 @@ export class LotteryService {
     let newSeriesNumber = lastSeriesNumber;
     lotteryNumbers.forEach((lNum) => {
       newSeriesNumber += 1;
-      const newSeries = this.seriesFormatter(newSeriesNumber, 5);
+      // const newSeries = this.seriesFormatter(newSeriesNumber, 5);
       const lotteryData = {
-        series: newSeries,
         seriesNumber: newSeriesNumber,
         userId: user._id,
         userPhoneNumber: user.phoneNumber,
         type: packageInfo.type,
-        amount: packageInfo.amount
+        amount: packageInfo.amount,
+        tohirolId: tohirol._id
       };
 
       const lotterySecureData = {
-        series: newSeries,
+        seriesNumber: newSeriesNumber,
         type: packageInfo.type,
         transactionId: transactionId,
         lotteryNumber: lNum
@@ -172,9 +177,13 @@ export class LotteryService {
       orderedLotteryList.push({
         lotteryNumber: lNum,
         secureData: encryptedUserSecureData,
-        status: "ACTIVE"
+        status: "ACTIVE",
+        tohirolId: tohirol._id
       });
-      lotteryList.push({ ...lotteryData, secureData: encryptedSecureData });
+      lotteryList.push({
+        ...lotteryData,
+        secureData: encryptedSecureData
+      });
     });
 
     return {
@@ -190,6 +199,23 @@ export class LotteryService {
   ): Promise<CreateQueueOutput> {
     try {
       const packageInfo = this.getPackageFromAmount(data.transaction.amount);
+      const tohirolRes = await this.tohirolService.getActiveTohirol();
+
+      if (tohirolRes.code === 500) {
+        throw new Error(tohirolRes.message);
+      }
+      const tohirol = tohirolRes.data;
+
+      // Tohirol duursen esehiig shalgana
+      const allLottery = await LotteryModel.find({ tohirolId: tohirol._id });
+
+      if (tohirol.status === TohirolStatus.FILLED) {
+        throw new Error("Тохирол дүүрсэн байна!");
+      }
+      if (allLottery.length >= tohirol.totalTicket) {
+        this.tohirolService.changeTohirolStatus(TohirolStatus.FILLED);
+        throw new Error("Тохирол дүүрсэн байна!");
+      }
 
       const vaultManager = VaultManager.getInstance();
 
@@ -211,6 +237,7 @@ export class LotteryService {
 
       // Lottery датаг үүсгэнэ
       const response = await this.generateLottery({
+        tohirol,
         transactionId: data.transaction.id,
         packageInfo,
         user: data.user,
@@ -218,12 +245,15 @@ export class LotteryService {
         userKeyPair: userSecret
       });
 
+
       await OrderedLotteryModel.insertMany(response.orderedLotteryList, {
         session
       });
+      
       await LotteryModel.insertMany(response.lotteryList, {
         session
       });
+      
       await this.updateLastSeriesNumber(response.lastSeriesNumber);
       return {
         result: true,
