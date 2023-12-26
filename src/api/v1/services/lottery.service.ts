@@ -52,22 +52,16 @@ export class LotteryService {
     switch (amount) {
       case 50000:
         return {
-          type: PackageType.PACKAGE_2,
-          count: 3,
-          amount
-        };
-      case 100000:
-        return {
-          type: PackageType.PACKAGE_3,
-          count: 6,
+          type: PackageType.PACKAGE_1,
+          count: 5,
           amount
         };
       default:
         return {
           type: PackageType.PACKAGE_1,
-          count: Math.floor(amount / 20000),
+          count: Math.floor(amount / 50000) * 5,
           amount,
-          change: amount % 20000
+          change: amount % 50000
         };
     }
   }
