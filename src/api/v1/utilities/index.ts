@@ -30,6 +30,14 @@ export const generateRandom8DigitNumber = (): number => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
+export const seriesFormatter = (
+  seriesNumber: number,
+  length: number
+): string => {
+  // Session-tei hiiwel prefix nemne
+  return seriesNumber.toString().padStart(length, "0");
+};
+
 export const encryptData = (plainText: string, publicKey: string): string => {
   const encryptedBuffer = crypto.publicEncrypt(
     { key: publicKey, padding: crypto.constants.RSA_PKCS1_OAEP_PADDING },

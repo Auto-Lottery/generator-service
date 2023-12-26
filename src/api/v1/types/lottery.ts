@@ -7,6 +7,7 @@ export type Lottery = {
   seriesNumber: number;
   type: PackageType;
   amount: number;
+  transactionId: string;
   createdDate?: number;
   secureData: string;
   tohirol: string;

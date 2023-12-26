@@ -19,6 +19,7 @@ import { errorLog } from "../utilities/log";
 import { RedisManager } from "./redis-manager";
 import VaultManager from "./vault-manager";
 import { TohirolService } from "./tohirol.service";
+import { Filter, generateQuery } from "../utilities/mongo";
 
 export class LotteryService {
   tohirolService: TohirolService;
@@ -26,20 +27,64 @@ export class LotteryService {
     this.tohirolService = new TohirolService();
   }
 
-  async getLotteryList(page: number, pageSize: number, sortBy?: string) {
+  async getLotteryList(filter: Filter) {
     try {
+      const { field, order } = filter?.sort || {
+        field: "_id",
+        order: "desc"
+      };
+      const { page, pageSize } = filter?.pagination || {
+        page: 1,
+        pageSize: 10
+      };
       const skip = (page - 1) * pageSize;
-      const orders = await OrderedLotteryModel.find()
+      const query = generateQuery(filter?.conditions || []);
+
+      const orders = await OrderedLotteryModel.find(query)
         .skip(skip)
         .limit(pageSize)
         .sort({
-          [sortBy || "_id"]: -1
+          [field]: order === "desc" ? -1 : 1
         })
-        .populate("tohirol")
-        .exec();
-      const total = await OrderedLotteryModel.countDocuments();
+        .populate("tohirol");
+
+      const total = await OrderedLotteryModel.countDocuments(query);
       return {
         lotteryList: orders,
+        total
+      };
+    } catch (error) {
+      errorLog("Error fetching order ", error);
+      throw new Error(`Error fetching order`);
+    }
+  }
+
+  async getUserLotteryList(filter: Filter) {
+    try {
+      const { field, order } = filter?.sort || {
+        field: "_id",
+        order: "desc"
+      };
+      const { page, pageSize } = filter?.pagination || {
+        page: 1,
+        pageSize: 10
+      };
+      const skip = (page - 1) * pageSize;
+      const query = generateQuery(filter?.conditions || []);
+
+      const lotteryList = await LotteryModel.find(query)
+        .skip(skip)
+        .limit(pageSize)
+        .sort({
+          [field]: order === "desc" ? -1 : 1
+        })
+        .populate("tohirol");
+
+      const total = await LotteryModel.countDocuments(query);
+      return {
+        userLotteryList: lotteryList.map((item) =>
+          item.toJSON({ virtuals: true })
+        ),
         total
       };
     } catch (error) {
@@ -115,11 +160,6 @@ export class LotteryService {
     return uniqueNumber.concat(otherNumbers);
   }
 
-  seriesFormatter(seriesNumber: number, length: number): string {
-    // Session-tei hiiwel prefix nemne
-    return seriesNumber.toString().padStart(length, "0");
-  }
-
   async generateLottery({
     tohirol,
     transactionId,
@@ -143,6 +183,7 @@ export class LotteryService {
         userPhoneNumber: user.phoneNumber,
         type: packageInfo.type,
         amount: packageInfo.amount,
+        transactionId,
         tohirol: tohirol._id
       };
 
@@ -217,7 +258,7 @@ export class LotteryService {
       const vaultManager = VaultManager.getInstance();
 
       const systemSecret = (await vaultManager.read(
-        "secret/data/systemSecret"
+        "kv/data/systemSecret"
       )) as KeyPair;
 
       if (!systemSecret) {

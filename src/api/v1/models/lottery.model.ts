@@ -1,4 +1,5 @@
 import { Schema, model } from "mongoose";
+import { seriesFormatter } from "../utilities";
 
 const LotterySchema = new Schema(
   {
@@ -14,6 +15,9 @@ const LotterySchema = new Schema(
     userId: {
       type: String,
       required: true
+    },
+    transactionId: {
+      type: Schema.Types.ObjectId
     },
     userPhoneNumber: {
       type: String,
@@ -38,7 +42,17 @@ const LotterySchema = new Schema(
     }
   },
   {
-    versionKey: false
+    versionKey: false,
+    virtuals: {
+      seriesNumberStr: {
+        get() {
+          return seriesFormatter(this.seriesNumber, 6);
+        }
+      }
+    },
+    toJSON: {
+      virtuals: false
+    }
   }
 );
 
