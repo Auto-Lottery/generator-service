@@ -65,7 +65,8 @@ export class GeneratorService {
               this.sendToTransaction({
                 transactionId: inputData.transaction.id,
                 status: "COMPLETE",
-                description: "Амжилттай үүслээ"
+                description: "Амжилттай үүслээ",
+                phoneNumber: inputData.user.phoneNumber
                 // ...res?.transaction
               });
             } else {
@@ -92,6 +93,7 @@ export class GeneratorService {
     transactionId: string;
     status: string;
     description: string;
+    phoneNumber?: string;
   }) {
     const rabbitMQManager = RabbitMQManager.getInstance();
     const rabbitMqChannel =
