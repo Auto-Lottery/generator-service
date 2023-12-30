@@ -5,4 +5,5 @@ export type GenerateLotteryOutput = {
   orderedLotteryList: OrderedLottery[];
   lotteryList: Lottery[];
   lastSeriesNumber: number;
+  lotteryNumbers: string[];
 };

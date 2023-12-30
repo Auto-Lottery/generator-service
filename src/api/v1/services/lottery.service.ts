@@ -13,18 +13,22 @@ import { User } from "../types/user";
 import {
   decryptData,
   encryptData,
-  generateRandom8DigitNumber
+  generateRandom6DigitNumber,
+  getLotterySmsBody
 } from "../utilities";
 import { errorLog } from "../utilities/log";
 import { RedisManager } from "./redis-manager";
 import VaultManager from "./vault-manager";
 import { TohirolService } from "./tohirol.service";
 import { Filter, generateQuery } from "../utilities/mongo";
+import { SmsService } from "./sms.service";
 
 export class LotteryService {
   tohirolService: TohirolService;
+  smsService: SmsService;
   constructor() {
     this.tohirolService = new TohirolService();
+    this.smsService = new SmsService();
   }
 
   async getLotteryList(filter: Filter) {
@@ -133,13 +137,17 @@ export class LotteryService {
     await redisManager.getClient()?.SET("SERIES", series);
   }
 
-  async generateLotteryNumber(count: number): Promise<string[]> {
+  async generateLotteryNumber(
+    count: number,
+    tohirolId: string
+  ): Promise<string[]> {
     const numbers = Array(count)
       .fill(0)
-      .map(() => generateRandom8DigitNumber().toString());
+      .map(() => generateRandom6DigitNumber().toString());
 
     // check exist
     const result = await OrderedLotteryModel.find({
+      tohirol: tohirolId,
       lotteryNumber: { $in: numbers }
     });
 
@@ -154,7 +162,8 @@ export class LotteryService {
     );
 
     const otherNumbers = await this.generateLotteryNumber(
-      count - uniqueNumber.length
+      count - uniqueNumber.length,
+      tohirolId
     );
 
     return uniqueNumber.concat(otherNumbers);
@@ -169,7 +178,10 @@ export class LotteryService {
     user
   }: GenerateLotteryInput): Promise<GenerateLotteryOutput> {
     const lastSeriesNumber = await this.getLastSeriesNumber();
-    const lotteryNumbers = await this.generateLotteryNumber(packageInfo.count);
+    const lotteryNumbers = await this.generateLotteryNumber(
+      packageInfo.count,
+      tohirol._id
+    );
     const orderedLotteryList: OrderedLottery[] = [];
     const lotteryList: Lottery[] = [];
 
@@ -225,6 +237,7 @@ export class LotteryService {
     return {
       orderedLotteryList,
       lotteryList,
+      lotteryNumbers,
       lastSeriesNumber: newSeriesNumber
     };
   }
@@ -290,6 +303,29 @@ export class LotteryService {
       await LotteryModel.insertMany(response.lotteryList, {
         session
       });
+
+      if (response.lotteryNumbers.length > 5) {
+        response.lotteryNumbers.map((ln, index) => {
+          if (index % 5 === 0 && index > 0) {
+            const smsLn = response.lotteryNumbers.slice(index - 5, index);
+            const smsBody = getLotterySmsBody(smsLn);
+            this.smsService.smsRequestSentToQueue(
+              data.user.operator,
+              data.user.phoneNumber,
+              smsBody,
+              JSON.stringify(data.transaction)
+            );
+          }
+        });
+      } else {
+        const smsBody = getLotterySmsBody(response.lotteryNumbers);
+        this.smsService.smsRequestSentToQueue(
+          data.user.operator,
+          data.user.phoneNumber,
+          smsBody,
+          JSON.stringify(data.transaction)
+        );
+      }
 
       await this.updateLastSeriesNumber(response.lastSeriesNumber);
       return {

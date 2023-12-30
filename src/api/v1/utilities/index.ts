@@ -30,6 +30,13 @@ export const generateRandom8DigitNumber = (): number => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
+export const generateRandom6DigitNumber = (): number => {
+  const min = 100000; // Smallest 6-digit number
+  const max = 999999; // Largest 6-digit number
+
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 export const seriesFormatter = (
   seriesNumber: number,
   length: number
@@ -57,4 +64,8 @@ export const decryptData = (
   );
 
   return decryptedBuffer.toString("utf-8");
+};
+
+export const getLotterySmsBody = (lotteryNumbers: string[]) => {
+  return `Tanii hudaldan awsan sugalaanii dugaar ${lotteryNumbers.join(", ")}`;
 };
