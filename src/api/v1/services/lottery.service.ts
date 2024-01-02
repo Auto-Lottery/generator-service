@@ -16,12 +16,13 @@ import {
   generateRandom6DigitNumber,
   getLotterySmsBody
 } from "../utilities";
-import { errorLog } from "../utilities/log";
+import { debugLog, errorLog } from "../utilities/log";
 import { RedisManager } from "./redis-manager";
 import VaultManager from "./vault-manager";
 import { TohirolService } from "./tohirol.service";
 import { Filter, generateQuery } from "../utilities/mongo";
 import { SmsService } from "./sms.service";
+import { isDev } from "../config";
 
 export class LotteryService {
   tohirolService: TohirolService;
@@ -304,27 +305,47 @@ export class LotteryService {
         session
       });
 
-      if (response.lotteryNumbers.length > 5) {
-        response.lotteryNumbers.map((ln, index) => {
-          if (index % 5 === 0 && index > 0) {
+      debugLog("SEND SMS");
+      if (response.lotteryNumbers.length > 10) {
+        response.lotteryNumbers.map((_, index) => {
+          if (index % 10 === 0 && index > 0) {
             const smsLn = response.lotteryNumbers.slice(index - 5, index);
             const smsBody = getLotterySmsBody(smsLn);
-            this.smsService.smsRequestSentToQueue(
-              data.user.operator,
-              data.user.phoneNumber,
-              smsBody,
-              JSON.stringify(data.transaction)
-            );
+
+            if (isDev) {
+              debugLog(
+                data.user.operator,
+                data.user.phoneNumber,
+                smsBody,
+                JSON.stringify(data.transaction)
+              );
+            } else {
+              this.smsService.smsRequestSentToQueue(
+                data.user.operator,
+                data.user.phoneNumber,
+                smsBody,
+                JSON.stringify(data.transaction)
+              );
+            }
           }
         });
       } else {
         const smsBody = getLotterySmsBody(response.lotteryNumbers);
-        this.smsService.smsRequestSentToQueue(
-          data.user.operator,
-          data.user.phoneNumber,
-          smsBody,
-          JSON.stringify(data.transaction)
-        );
+        if (isDev) {
+          debugLog(
+            data.user.operator,
+            data.user.phoneNumber,
+            smsBody,
+            JSON.stringify(data.transaction)
+          );
+        } else {
+          this.smsService.smsRequestSentToQueue(
+            data.user.operator,
+            data.user.phoneNumber,
+            smsBody,
+            JSON.stringify(data.transaction)
+          );
+        }
       }
 
       await this.updateLastSeriesNumber(response.lastSeriesNumber);

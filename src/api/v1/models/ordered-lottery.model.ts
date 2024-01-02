@@ -5,7 +5,6 @@ const OrderedLotterySchema = new Schema(
     lotteryNumber: {
       type: String,
       required: true,
-      upperCase: true,
       unique: true
     },
     secureData: {
@@ -15,7 +14,10 @@ const OrderedLotterySchema = new Schema(
     status: {
       type: String
     },
-    tohirol: { type: Schema.Types.ObjectId, ref: "tohirol" },
+    tohirol: {
+      type: String,
+      required: true
+    },
     createdDate: {
       type: Number,
       default: Date.now(),

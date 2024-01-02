@@ -8,7 +8,7 @@ export class SmsService {
     operator: string,
     toNumber: string,
     smsBody: string,
-    additionalData?: string,
+    additionalData?: string
   ) {
     try {
       const rabbitMQManager = RabbitMQManager.getInstance();

@@ -67,5 +67,5 @@ export const decryptData = (
 };
 
 export const getLotterySmsBody = (lotteryNumbers: string[]) => {
-  return `Tanii hudaldan awsan sugalaanii dugaar ${lotteryNumbers.join(", ")}`;
+  return `AutoPrime: Tanii hudaldan avsan sugalaanii dugaar ${lotteryNumbers.join(", ")}.`;
 };
