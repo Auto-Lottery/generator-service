@@ -10,10 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Build Docker Image
-      run: |
-         echo ${{ secrets.DEPLOY_USER }}
-         echo ${{ secrets.DOCKER_NAMESPACE }}
     - name: Checkout Repository
       uses: actions/checkout@v2
 
