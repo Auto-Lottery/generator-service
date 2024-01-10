@@ -20,6 +20,7 @@ export class SmsService {
             JSON.stringify({
               operator,
               toNumber,
+              type: "LOTTERY",
               smsBody,
               additionalData
             })
