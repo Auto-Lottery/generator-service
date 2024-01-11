@@ -67,5 +67,17 @@ export const decryptData = (
 };
 
 export const getLotterySmsBody = (lotteryNumbers: string[]) => {
-  return `AutoPrime: Tanii hudaldan avsan sugalaanii dugaar ${lotteryNumbers.join(", ")}.`;
+  return `AutoPrime: Tanii hudaldan avsan sugalaanii dugaar ${lotteryNumbers.join(
+    ", "
+  )}.`;
+};
+
+export const groupArray = (array: string[], groupSize: number) => {
+  const result: string[][] = [];
+
+  for (let i = 0; i < array.length; i += groupSize) {
+    result.push(array.slice(i, i + groupSize));
+  }
+
+  return result;
 };

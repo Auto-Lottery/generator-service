@@ -14,7 +14,8 @@ import {
   decryptData,
   encryptData,
   generateRandom6DigitNumber,
-  getLotterySmsBody
+  getLotterySmsBody,
+  groupArray
 } from "../utilities";
 import { debugLog, errorLog } from "../utilities/log";
 import { RedisManager } from "./redis-manager";
@@ -307,26 +308,23 @@ export class LotteryService {
 
       debugLog("SEND SMS");
       if (response.lotteryNumbers.length > 10) {
-        response.lotteryNumbers.map((_, index) => {
-          if (index % 10 === 0 && index > 0) {
-            const smsLn = response.lotteryNumbers.slice(index - 5, index);
-            const smsBody = getLotterySmsBody(smsLn);
-
-            if (isDev) {
-              debugLog(
-                data.user.operator,
-                data.user.phoneNumber,
-                smsBody,
-                JSON.stringify(data.transaction)
-              );
-            } else {
-              this.smsService.smsRequestSentToQueue(
-                data.user.operator,
-                data.user.phoneNumber,
-                smsBody,
-                JSON.stringify(data.transaction)
-              );
-            }
+        const groups = groupArray(response.lotteryNumbers, 10);
+        groups.map((smsLn) => {
+          const smsBody = getLotterySmsBody(smsLn);
+          if (isDev) {
+            debugLog(
+              data.user.operator,
+              data.user.phoneNumber,
+              smsBody,
+              JSON.stringify(data.transaction)
+            );
+          } else {
+            this.smsService.smsRequestSentToQueue(
+              data.user.operator,
+              data.user.phoneNumber,
+              smsBody,
+              JSON.stringify(data.transaction)
+            );
           }
         });
       } else {
