@@ -100,20 +100,26 @@ export class LotteryService {
   }
 
   private getPackageFromAmount(amount: number): PackageInfo {
-    switch (amount) {
-      case 50000:
-        return {
-          type: PackageType.PACKAGE_1,
-          count: 5,
-          amount
-        };
-      default:
-        return {
-          type: PackageType.PACKAGE_1,
-          count: Math.floor(amount / 50000) * 5,
-          amount,
-          change: amount % 50000
-        };
+    if (amount === 50000) {
+      return {
+        type: PackageType.PACKAGE_1,
+        count: 5,
+        amount
+      };
+    } else if (amount > 50000) {
+      return {
+        type: PackageType.PACKAGE_1,
+        count: Math.floor(amount / 50000) * 5,
+        amount,
+        change: amount % 50000
+      };
+    } else {
+      return {
+        type: PackageType.PACKAGE_2,
+        count: Math.floor(amount / 10000),
+        amount,
+        change: amount % 10000
+      };
     }
   }
   // Сугалааны дарааллын сүүлийн дугаар
