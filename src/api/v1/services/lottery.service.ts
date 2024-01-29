@@ -106,13 +106,6 @@ export class LotteryService {
         count: 5,
         amount
       };
-    } else if (amount > 50000) {
-      return {
-        type: PackageType.PACKAGE_1,
-        count: Math.floor(amount / 50000) * 5,
-        amount,
-        change: amount % 50000
-      };
     } else {
       return {
         type: PackageType.PACKAGE_2,
